@@ -3,21 +3,22 @@
 Mini-application "Carnet de recettes" :
 - **Backend** FastAPI (Python) avec une API REST pour gérer des recettes
 - **Frontend** Next.js 15 (TypeScript) qui consomme l'API
-- **Chat IA** : un endpoint `/chat` côté backend que **vous devez implémenter** (LangChain + Anthropic)
+- **Chat IA** : un endpoint `/chat` côté backend que **vous devez implémenter** (LangChain + Azure AI Inference, déploiement **Kimi-K2.6**)
 
 Voir `BRIEF.md` pour les consignes pédagogiques détaillées.
 
 ## Prérequis
 
 - Docker et Docker Compose installés
-- Une clé API Anthropic (fournie par votre formateur)
+- Un accès au déploiement Azure AI Foundry (endpoint + clé + nom du modèle), fourni par votre formateur
 
 ## Lancement
 
 ```bash
-# 1. Configurer la clé API
+# 1. Configurer les variables Azure
 cp .env.example .env
-# édite .env et colle ta clé Anthropic
+# édite .env et renseigne les trois variables AZURE_*
+# (endpoint et clé visibles dans Azure AI Foundry → ton projet → Models + endpoints → Kimi-K2.6)
 
 # 2. Démarrer
 make up
@@ -84,6 +85,7 @@ Le frontend affiche les recettes à gauche et un panneau de chat à droite. Le c
 ## Ressources
 
 - [FastAPI — premiers pas](https://fastapi.tiangolo.com/tutorial/first-steps/)
-- [LangChain — Tool calling agents](https://python.langchain.com/docs/how_to/agent_executor/)
-- [Anthropic — Messages API](https://docs.anthropic.com/en/api/messages)
+- [LangChain — `create_agent`](https://docs.langchain.com/oss/python/langchain/agents)
+- [`langchain-azure-ai` — chat models](https://python.langchain.com/docs/integrations/chat/azure_ai/)
+- [Azure AI Foundry — Inference API](https://learn.microsoft.com/azure/ai-foundry/model-inference/)
 - [Next.js App Router](https://nextjs.org/docs/app)

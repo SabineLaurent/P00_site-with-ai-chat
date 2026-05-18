@@ -8,21 +8,22 @@ Brief rattaché à la SP **« Prendre en main un agent conversationnel en enviro
 ## Ressources
 - Le repo du projet (ce dépôt) — application web fournie clé en main : backend FastAPI + frontend Next.js + Docker Compose.
 - [Documentation FastAPI — tutoriel](https://fastapi.tiangolo.com/tutorial/first-steps/)
-- [Documentation LangChain — Tool calling agents](https://python.langchain.com/docs/how_to/agent_executor/)
+- [Documentation LangChain — `create_agent`](https://docs.langchain.com/oss/python/langchain/agents)
 - [Documentation LangChain — décorateur `@tool`](https://python.langchain.com/docs/how_to/custom_tools/)
-- [Documentation Anthropic — Messages API](https://docs.anthropic.com/en/api/messages)
+- [`langchain-azure-ai` — chat models](https://python.langchain.com/docs/integrations/chat/azure_ai/)
+- [Azure AI Foundry — Inference API](https://learn.microsoft.com/azure/ai-foundry/model-inference/)
 - [Documentation Next.js — App Router](https://nextjs.org/docs/app)
 
 ## Contexte du projet
 Vous rejoignez **Saveurs Connectées**, une jeune entreprise qui développe une application web de carnet de recettes. Le MVP existe déjà : un frontend Next.js permet de lister, créer et supprimer des recettes via une API REST FastAPI, et le tout tourne en Docker Compose. La direction veut maintenant ajouter un **panneau de chat conversationnel** dans lequel l'utilisateur pourra dialoguer avec un assistant IA pour, à terme, manipuler ses recettes en langage naturel.
 
-Le panneau de chat est déjà présent dans l'interface, et le backend expose une route `/chat` qui répond pour le moment un message factice. Votre responsable vous confie l'intégration : lire le code existant pour vous l'approprier, faire tourner l'application localement, puis brancher un agent LangChain alimenté par Claude (Anthropic) sur cette route. Le projet est découpé en étapes pour vous laisser monter progressivement en complexité.
+Le panneau de chat est déjà présent dans l'interface, et le backend expose une route `/chat` qui répond pour le moment un message factice. Votre responsable vous confie l'intégration : lire le code existant pour vous l'approprier, faire tourner l'application localement, puis brancher un agent LangChain alimenté par **Kimi-K2.6** hébergé sur Azure AI Foundry (via le package `langchain-azure-ai`) sur cette route. Le projet est découpé en étapes pour vous laisser monter progressivement en complexité.
 
 Vos tâches sont les suivantes :
 - installer et démarrer l'application avec `docker compose up`, vérifier que le backend (`/health`) et le frontend sont accessibles, et tester l'envoi d'un message dans le chat (qui doit renvoyer un placeholder).
 - lire le code de `backend/app/routes/recipes.py` et `backend/app/store.py` pour comprendre comment le CRUD est exposé, puis tester chaque endpoint via Swagger UI (`http://localhost:8000/docs`).
-- implémenter l'étape 1 du chat dans `backend/app/routes/chat.py` : remplacer le placeholder par un appel direct à Claude Haiku 4.5 via LangChain (`ChatAnthropic`), sans outils, qui renvoie la réponse du modèle au front.
-- implémenter l'étape 2 : créer un agent LangChain (`create_tool_calling_agent` + `AgentExecutor`) doté de trois outils branchés sur `app/store.py` — `list_recipes`, `create_recipe`, `delete_recipe`. L'utilisateur doit pouvoir dire « ajoute une recette tarte aux fraises avec fraises, sucre, crème » et voir la liste se mettre à jour à l'écran.
+- implémenter l'étape 1 du chat dans `backend/app/routes/chat.py` : remplacer le placeholder par un appel direct à Kimi-K2.6 via `AzureAIChatCompletionsModel` (package `langchain-azure-ai`), sans outils, qui renvoie la réponse du modèle au front.
+- implémenter l'étape 2 : créer un agent LangChain avec `langchain.agents.create_agent` doté de trois outils branchés sur `app/store.py` — `list_recipes`, `create_recipe`, `delete_recipe`. L'utilisateur doit pouvoir dire « ajoute une recette tarte aux fraises avec fraises, sucre, crème » et voir la liste se mettre à jour à l'écran.
 - (étape stretch optionnelle) ajouter une mémoire conversationnelle simple : l'agent doit se souvenir des messages précédents dans la même session.
 - rédiger une section « Comment fonctionne le chat » dans le README, à destination d'un·e collègue qui n'a jamais vu le projet, en expliquant le rôle de l'agent, des outils, et le flux de données entre front, back et LLM.
 
