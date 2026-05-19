@@ -31,5 +31,5 @@ class ChatResponse(BaseModel):
 def chat(request: ChatRequest) -> ChatResponse:
     # TODO: remplacer cette ligne par un appel à l'agent LangChain (Kimi-K2.6 sur Azure)
     return ChatResponse(
-        reply=f"TODO: implémenter le chat. Tu m'as envoyé : {request.message!r}",
+        reply=f"Et maince il va falloir bosser : {request.message!r}",
     )
