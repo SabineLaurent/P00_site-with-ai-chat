@@ -17,9 +17,13 @@ from fastapi import APIRouter
 from pydantic import BaseModel # C quoi ??
 from langchain_azure_ai.chat_models import AzureAIChatCompletionsModel
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain.tools import tool
+from langchain.agents import create_tool_calling_agent, AgentExecutor, AgentOutputParser
+from langchain import hub
 
 import os 
 import dotenv
+from app.store import list_recipes, create_recipe, delete_recipe
 
 dotenv.load_dotenv()
 
