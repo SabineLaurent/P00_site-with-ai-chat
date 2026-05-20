@@ -19,12 +19,17 @@ from langchain_azure_ai.chat_models import AzureAIChatCompletionsModel
 from langchain_core.messages import HumanMessage, SystemMessage
 
 import os 
+import dotenv
+
+dotenv.load_dotenv()
 
 
 # Sans passer par dotenv, est-ce que ca convient @elbby
-_endpoint = os.environ["AZURE_AI_INFERENCE_ENDPOINT"]
-_credential=os.environ["AZURE_AI_INFERENCE_API_KEY"]
-_model_name=os.environ["AZURE_AI_INFERENCE_MODEL"]
+
+## dangereux de passer par environ  car getter et setter
+_endpoint = os.getenv(["AZURE_AI_INFERENCE_ENDPOINT"])
+_credential=os.getenv(["AZURE_AI_INFERENCE_API_KEY"])
+_model_name=os.getenv(["AZURE_AI_INFERENCE_MODEL"])
 
 
 
@@ -61,4 +66,3 @@ def chat(request: ChatRequest) -> ChatResponse:
     response = llm.invoke(messages)
 
     return ChatResponse(reply=response.content)
-
