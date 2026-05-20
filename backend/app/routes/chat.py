@@ -14,12 +14,31 @@
 """
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel # C quoi ??
+from langchain_azure_ai.chat_models import AzureAIChatCompletionsModel
+from langchain_core.messages import HumanMessage, SystemMessage
+
+import os 
+
+
+# Sans passer par dotenv, est-ce que ca convient @elbby
+_endpoint = os.environ["AZURE_AI_INFERENCE_ENDPOINT"]
+_credential=os.environ["AZURE_AI_INFERENCE_API_KEY"]
+_model_name=os.environ["AZURE_AI_INFERENCE_MODEL"]
+
+
+
+
+llm = AzureAIChatCompletionsModel(
+    endpoint=_endpoint,
+    credential=_credential,
+    model_name=_model_name
+)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
-class ChatRequest(BaseModel):
+class ChatRequest(BaseModel):  ## je ne comprend pas encore ??
     message: str
 
 
@@ -27,9 +46,19 @@ class ChatResponse(BaseModel):
     reply: str
 
 
-@router.post("", response_model=ChatResponse)
+@router.post("", response_model=ChatResponse) # un decorateur qui indique que cette fonction gère les requetes POST sur le endpoint /chat, et que la reponse doit etre du type ChatResponse
 def chat(request: ChatRequest) -> ChatResponse:
-    # TODO: remplacer cette ligne par un appel à l'agent LangChain (Kimi-K2.6 sur Azure)
-    return ChatResponse(
-        reply=f"Et maince il va falloir bosser : {request.message!r}",
-    )
+    # LangChain attend une liste de messages.
+    # SystemMessage = instructions données au modèle (son "rôle").
+    # HumanMessage  = le message de l'utilisateur.
+    messages = [
+        SystemMessage(content="Tu es un assistant culinaire. Réponds en français."),
+        HumanMessage(content=request.message),
+    ] # formater grace à core.messages
+
+    # invoke() envoie les messages au modèle et retourne un AIMessage.
+    # .content contient le texte de la réponse.
+    response = llm.invoke(messages)
+
+    return ChatResponse(reply=response.content)
+
