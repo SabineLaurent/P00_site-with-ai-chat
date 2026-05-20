@@ -16,14 +16,14 @@
 from fastapi import APIRouter
 from pydantic import BaseModel # C quoi ??
 from langchain_azure_ai.chat_models import AzureAIChatCompletionsModel
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.tools import tool
-from langchain.agents import create_tool_calling_agent, AgentExecutor, AgentOutputParser
-from langchain import hub
+from langchain.agents import create_agent
 
 import os 
 import dotenv
-from app.store import list_recipes, create_recipe, delete_recipe
+from app.store import list_recipes, create_recipe, delete_recipe, RecipeCreate
 
 dotenv.load_dotenv()
 
@@ -39,7 +39,7 @@ _model_name=os.getenv("AZURE_AI_INFERENCE_MODEL")
 llm = AzureAIChatCompletionsModel(
     endpoint=_endpoint,
     credential=_credential,
-    model_name=_model_name
+    model=_model_name
 )
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -52,19 +52,31 @@ class ChatRequest(BaseModel):  ## je ne comprend pas encore ??
 class ChatResponse(BaseModel):
     reply: str
 
+@tool
+def list_recipes_tools() -> str:
+    """Retourne la liste des recettes actuelles."""
+    return str(list_recipes())
+
+@tool
+def create_recipe_tools(name: str, ingredients: list[str]) -> str:
+    """Crée une nouvelle recette avec le nom et les ingrédients donnés."""
+    return str(create_recipe(RecipeCreate(name=name, ingredients=ingredients)))
+
+@tool
+def delete_recipe_tools(recipe_id: int) -> str:
+    """Supprime la recette avec l'ID donné."""
+    return str(delete_recipe(recipe_id))
+
+tools = [list_recipes_tools, create_recipe_tools, delete_recipe_tools]
+
+system_prompt = "Tu es un assistant culinaire. Réponds en français et utilise les tools quand nécessaire."
+    
+agent = create_agent(llm, tools, system_prompt=system_prompt)
+
 
 @router.post("", response_model=ChatResponse) # un decorateur qui indique que cette fonction gère les requetes POST sur le endpoint /chat, et que la reponse doit etre du type ChatResponse
 def chat(request: ChatRequest) -> ChatResponse:
-    # LangChain attend une liste de messages.
-    # SystemMessage = instructions données au modèle (son "rôle").
-    # HumanMessage  = le message de l'utilisateur.
-    messages = [
-        SystemMessage(content="Tu es un assistant culinaire. Réponds en français."),
-        HumanMessage(content=request.message),
-    ] # formater grace à core.messages
 
-    # invoke() envoie les messages au modèle et retourne un AIMessage.
-    # .content contient le texte de la réponse.
-    response = llm.invoke(messages)
+    result = agent.invoke({"messages": [HumanMessage(content=request.message)]})
 
-    return ChatResponse(reply=response.content)
+    return ChatResponse(reply=result["messages"][-1].content)
