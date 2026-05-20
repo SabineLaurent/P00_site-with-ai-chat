@@ -77,6 +77,8 @@ agent = create_agent(llm, tools, system_prompt=system_prompt)
 @router.post("", response_model=ChatResponse) # un decorateur qui indique que cette fonction gère les requetes POST sur le endpoint /chat, et que la reponse doit etre du type ChatResponse
 def chat(request: ChatRequest) -> ChatResponse:
 
-    result = agent.invoke({"messages": [HumanMessage(content=request.message)]})
-
+    
+    result = agent.invoke({"messages": [
+        {"type": "user", "content": request.message}
+    ]})
     return ChatResponse(reply=result["messages"][-1].content)
