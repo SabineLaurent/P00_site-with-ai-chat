@@ -18,7 +18,7 @@ from app import config, store
 from fastapi import APIRouter
 from langchain.agents import create_agent
 from langchain_azure_ai.chat_models import AzureAIChatCompletionsModel
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from pydantic import BaseModel
 
@@ -65,5 +65,5 @@ def chat(request: ChatRequest) -> ChatResponse:
     agent = create_agent(model=model, tools=tools)
 
     result = agent.invoke({"messages": [HumanMessage(content=request.message)]})
-    
+
     return ChatResponse(reply=result["messages"][-1].content)
