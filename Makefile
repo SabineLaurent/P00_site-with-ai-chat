@@ -17,3 +17,7 @@ clean:
 
 test:
 	docker compose run --rm backend pytest
+
+restart:
+	$(MAKE) down
+	$(MAKE) up
