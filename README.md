@@ -46,6 +46,35 @@ curl -X POST http://localhost:8000/chat \
 
 Le frontend affiche les recettes à gauche et un panneau de chat à droite. Le chat répond actuellement avec un placeholder — **votre travail est d'y brancher un vrai agent LangChain**.
 
+## Fonctionnement du chat
+
+Cette section décrit le fonctionnement du chat côté backend et le flux complet de données.
+
+### Rôle de l'agent
+
+- L'agent est un assistant culinaire (prompt système) qui répond aux utilisateurs et décide quand appeler des outils.
+- Il s'appuie sur un modèle Azure AI (Kimi-K2.6) via LangChain.
+- Une mémoire de conversation est branchée pour conserver le contexte par session (`thread_id`).
+
+### Rôle de chaque outil
+
+Les outils sont exposés à l'agent pour interagir avec les recettes en mémoire :
+
+- `list_recipes` : retourne la liste actuelle des recettes (nom + ingrédients).
+- `create_recipe` : crée une recette à partir d'un nom et d'une liste d'ingrédients.
+- `delete_recipe` : supprime une recette par identifiant.
+
+Ces outils délèguent au module `store.py` (CRUD en mémoire) et renvoient des objets simples que l'agent peut résumer.
+
+### Flux de données
+
+1. Le frontend envoie un message utilisateur via `POST /chat`.
+2. Le backend crée (ou réutilise) un agent LangChain et lui passe le message.
+3. L'agent décide s'il répond directement avec le modèle ou s'il appelle un ou plusieurs outils.
+4. Les outils lisent ou modifient le store de recettes, puis renvoient leurs résultats à l'agent.
+5. L'agent compose la réponse finale et le backend renvoie `{ reply }` au frontend.
+6. Le frontend affiche la réponse et rafraîchit la liste des recettes.
+
 ## Structure
 
 ```
@@ -73,13 +102,14 @@ Le frontend affiche les recettes à gauche et un panneau de chat à droite. Le c
 
 ## Commandes utiles
 
-| Commande     | Effet                                            |
-|--------------|--------------------------------------------------|
-| `make up`    | Build + démarre tout (logs en avant-plan)        |
-| `make down`  | Arrête les services                              |
-| `make logs`  | Logs en continu                                  |
-| `make test`  | Lance les tests pytest du backend                |
-| `make clean` | Down + supprime les volumes                      |
+| Commande      | Effet                                            |
+|---------------|--------------------------------------------------|
+| `make up`     | Build + démarre tout (logs en avant-plan)        |
+| `make down`   | Arrête les services                              |
+| `make logs`   | Logs en continu                                  |
+| `make test`   | Lance les tests pytest du backend                |
+| `make clean`  | Down + supprime les volumes                      |
+| `make restart`| Down + Up
 
 ## Ressources
 
