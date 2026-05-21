@@ -12,6 +12,7 @@
 
 Étape 3 (stretch) : mémoire conversationnelle pour suivre une session de chat.
 """
+import asyncio
 
 from fastapi import APIRouter
 from pydantic import BaseModel # C quoi ??
@@ -21,9 +22,17 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.tools import tool
 from langchain.agents import create_agent
 
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.graph import StateGraph
+
+
 import os 
 import dotenv
 from app.store import list_recipes, create_recipe, delete_recipe, RecipeCreate
+
+
+
+
 
 dotenv.load_dotenv()
 
@@ -71,7 +80,7 @@ tools = [list_recipes_tools, create_recipe_tools, delete_recipe_tools]
 
 system_prompt = "Tu es un assistant culinaire. Réponds en français et utilise les tools quand nécessaire."
     
-agent = create_agent(llm, tools, system_prompt=system_prompt)
+agent = create_agent(llm, tools, system_prompt=system_prompt, checkpointer=InMemorySaver())
 
 
 @router.post("", response_model=ChatResponse) # un decorateur qui indique que cette fonction gère les requetes POST sur le endpoint /chat, et que la reponse doit etre du type ChatResponse
@@ -80,3 +89,5 @@ def chat(request: ChatRequest) -> ChatResponse:
     result = agent.invoke({"messages": [HumanMessage(content=request.message)]})
 
     return ChatResponse(reply=result["messages"][-1].content)
+
+
