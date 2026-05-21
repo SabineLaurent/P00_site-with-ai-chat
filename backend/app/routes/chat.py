@@ -13,7 +13,11 @@
 Étape 3 (stretch) : mémoire conversationnelle pour suivre une session de chat.
 """
 
-from fastapi import APIRouter
+
+from app import config
+from fastapi import APIRouter, HTTPException
+from langchain_azure_ai.chat_models import AzureAIChatCompletionsModel
+from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -29,7 +33,13 @@ class ChatResponse(BaseModel):
 
 @router.post("", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
-    # TODO: remplacer cette ligne par un appel à l'agent LangChain (Kimi-K2.6 sur Azure)
-    return ChatResponse(
-        reply=f"TODO: implémenter le chat. Tu m'as envoyé : {request.message!r}",
+
+    model = AzureAIChatCompletionsModel(
+        endpoint=config.endpoint,
+        credential=config.api_key,
+        model=config.model_name,
     )
+    response = model.invoke([HumanMessage(content=request.message)])
+
+
+    return ChatResponse(reply=response.content)
