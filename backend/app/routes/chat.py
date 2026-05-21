@@ -14,15 +14,11 @@
 """
 
 
-from app import config
-
 from fastapi import APIRouter
-from langchain.agents import create_agent
-from langchain_azure_ai.chat_models import AzureAIChatCompletionsModel
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 
-from app.agent.tools import list_recipes, create_recipe, delete_recipe
+from app.agent.agent import get_agent
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -37,15 +33,6 @@ class ChatResponse(BaseModel):
 @router.post("", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
 
-    model = AzureAIChatCompletionsModel(
-        endpoint=config.endpoint,
-        credential=config.api_key,
-        model=config.model_name,
-    )
-
-    tools = [list_recipes, create_recipe, delete_recipe]
-
-    agent = create_agent(model=model, tools=tools)
-    
+    agent = get_agent()
     result = agent.invoke({"messages": [HumanMessage(content=request.message)]})
     return ChatResponse(reply=result["messages"][-1].content)

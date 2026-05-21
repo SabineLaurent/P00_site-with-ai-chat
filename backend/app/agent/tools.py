@@ -5,6 +5,7 @@ from app import store
 
 @tool
 def list_recipes() -> list[dict]:
+    """Retourne la liste des recettes enregistrées."""
     return [
         {
             "name": recipe.name,
@@ -15,6 +16,7 @@ def list_recipes() -> list[dict]:
 
 @tool
 def create_recipe(name: str, ingredients: list[str]) -> dict:
+    """Crée une nouvelle recette."""
     recipe = store.create_recipe(store.RecipeCreate(name=name, ingredients=ingredients))
     return {
         "name": recipe.name,
@@ -23,7 +25,11 @@ def create_recipe(name: str, ingredients: list[str]) -> dict:
 
 @tool
 def delete_recipe(recipe_id: int) -> dict:
+    """Supprime une recette par identifiant."""
     ok = store.delete_recipe(recipe_id)
     return {
         "deleted": ok,
     }
+
+
+available_tools = [list_recipes, create_recipe, delete_recipe]
