@@ -66,7 +66,8 @@ def chat(request: ChatRequest) -> ChatResponse:
         tools=tools,
     )
 
-    response = model.invoke([HumanMessage(content=request.message)])
+    agent_executor = AgentExecutor(agent=agent, tools=tools)
 
+    result = agent_executor.invoke({"input": request.message})
 
-    return ChatResponse(reply=response.content)
+    return ChatResponse(reply=result)
