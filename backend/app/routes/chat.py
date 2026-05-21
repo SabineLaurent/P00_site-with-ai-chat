@@ -27,11 +27,9 @@ dotenv.load_dotenv()
 # Sans passer par dotenv, est-ce que ca convient @elbby
 
 ## dangereux de passer par environ  car getter et setter
-_endpoint = os.getenv(["AZURE_AI_INFERENCE_ENDPOINT"])
-_credential=os.getenv(["AZURE_AI_INFERENCE_API_KEY"])
-_model_name=os.getenv(["AZURE_AI_INFERENCE_MODEL"])
-
-
+_endpoint = os.getenv("AZURE_AI_INFERENCE_ENDPOINT")
+_credential=os.getenv("AZURE_AI_INFERENCE_API_KEY")
+_model_name=os.getenv("AZURE_AI_INFERENCE_MODEL")
 
 
 llm = AzureAIChatCompletionsModel(
