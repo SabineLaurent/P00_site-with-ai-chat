@@ -14,11 +14,14 @@
 """
 
 
-from app import config
-from fastapi import APIRouter, HTTPException
+from app import config, store
+from fastapi import APIRouter
 from langchain_azure_ai.chat_models import AzureAIChatCompletionsModel
-from langchain_core.messages import HumanMessage
+from langchain.agents import create_tool_calling_agent, AgentExecutor
+from langchain_core.tools import tool
+from langchain_core.messages import HumanMessage, AIMessage
 from pydantic import BaseModel
+
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -29,6 +32,22 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+
+
+@tool
+def list_recipes() -> list[str]:
+    """Retourne la liste des recettes enregistrées."""
+    return store.list_recipes()
+
+@tool
+def create_recipe(name: str, ingredients: list[str]) -> str:
+    """Crée une nouvelle recette."""
+    return store.create_recipe(name, ingredients)
+
+@tool
+def delete_recipe(id: str) -> bool:
+    """Supprime une recette par son ID."""
+    return store.delete_recipe(id)
 
 
 @router.post("", response_model=ChatResponse)
