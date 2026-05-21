@@ -27,19 +27,13 @@ from app.store import list_recipes, create_recipe, delete_recipe, RecipeCreate
 
 dotenv.load_dotenv()
 
-from typing import List, Dict
+from typing import List
 
 
-MAX_MESSAGES = 10
-conversation_history: List[dict] = []  # Stocke les messages de la conversation
-
-
+conversation_history: List[dict] = []  
 
 
 
-# Sans passer par dotenv, est-ce que ca convient @elbby
-
-## dangereux de passer par environ  car getter et setter
 _endpoint = os.getenv("AZURE_AI_INFERENCE_ENDPOINT")
 _credential=os.getenv("AZURE_AI_INFERENCE_API_KEY")
 _model_name=os.getenv("AZURE_AI_INFERENCE_MODEL")
@@ -83,7 +77,7 @@ system_prompt = "Tu es un assistant culinaire. Réponds en français et utilise 
 agent = create_agent(llm, tools, system_prompt=system_prompt)
 
 
-@router.post("", response_model=ChatResponse) # un decorateur qui indique que cette fonction gère les requetes POST sur le endpoint /chat, et que la reponse doit etre du type ChatResponse
+@router.post("", response_model=ChatResponse) 
 def chat(request: ChatRequest) -> ChatResponse:
 
     conversation_history.append(
@@ -96,5 +90,5 @@ def chat(request: ChatRequest) -> ChatResponse:
         {"type": "assistant", "content": result["messages"][-1].content}
     )
     
-    print(conversation_history)
+    # print(conversation_history)
     return ChatResponse(reply=result["messages"][-1].content)
