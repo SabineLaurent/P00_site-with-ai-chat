@@ -1,20 +1,20 @@
 """Endpoint de chat — STUB à implémenter par l'étudiant.
 
-Étape 1 : remplacer la réponse 'TODO' par un appel direct à Kimi-K2.6 via
+✅ Étape 1 : remplacer la réponse 'TODO' par un appel direct à Kimi-K2.6 via
           AzureAIChatCompletionsModel (langchain-azure-ai), sans outils,
           qui renvoie la réponse du modèle.
 
-Étape 2 : transformer ça en agent LangChain avec 3 outils branchés sur app/store.py :
+✅ Étape 2 : transformer ça en agent LangChain avec 3 outils branchés sur app/store.py :
           - list_recipes  → retourne la liste actuelle
           - create_recipe → crée une nouvelle recette
           - delete_recipe → supprime par id
           (voir langchain.agents.create_agent)
 
-Étape 3 (stretch) : mémoire conversationnelle pour suivre une session de chat.
+✅ Étape 3 (stretch) : mémoire conversationnelle pour suivre une session de chat.
 """
 
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 
@@ -31,8 +31,11 @@ class ChatResponse(BaseModel):
 
 
 @router.post("", response_model=ChatResponse)
-def chat(request: ChatRequest) -> ChatResponse:
+def chat(request: ChatRequest, session_id: str = Query("default")) -> ChatResponse:
 
     agent = get_agent()
-    result = agent.invoke({"messages": [HumanMessage(content=request.message)]})
+    result = agent.invoke(
+        {"messages": [HumanMessage(content=request.message)]},
+        config={"configurable": {"thread_id": session_id}},
+    )
     return ChatResponse(reply=result["messages"][-1].content)

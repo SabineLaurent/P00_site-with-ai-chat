@@ -25,7 +25,7 @@ def create_recipe(name: str, ingredients: list[str]) -> dict:
 
 @tool
 def delete_recipe(recipe_id: int) -> dict:
-    """Supprime une recette par identifiant."""
+    """Supprime une recette en se basant sur son identifiant."""
     ok = store.delete_recipe(recipe_id)
     return {
         "deleted": ok,
