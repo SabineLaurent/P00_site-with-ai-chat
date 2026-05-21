@@ -33,7 +33,10 @@ def test_create_and_delete_recipe() -> None:
     assert not_found.status_code == 404
 
 
-def test_chat_stub_responds() -> None:
+def test_chat_responds() -> None:
     response = client.post("/chat", json={"message": "Bonjour"})
     assert response.status_code == 200
-    assert "TODO" in response.json()["reply"]
+    reply = response.json()["reply"]
+    assert isinstance(reply, str)
+    assert reply.strip()
+

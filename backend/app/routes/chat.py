@@ -27,6 +27,15 @@ from app.store import list_recipes, create_recipe, delete_recipe, RecipeCreate
 
 dotenv.load_dotenv()
 
+from typing import List, Dict
+
+
+MAX_MESSAGES = 10
+conversation_history: List[dict] = []  # Stocke les messages de la conversation
+
+
+
+
 
 # Sans passer par dotenv, est-ce que ca convient @elbby
 
@@ -77,8 +86,15 @@ agent = create_agent(llm, tools, system_prompt=system_prompt)
 @router.post("", response_model=ChatResponse) # un decorateur qui indique que cette fonction gère les requetes POST sur le endpoint /chat, et que la reponse doit etre du type ChatResponse
 def chat(request: ChatRequest) -> ChatResponse:
 
-    
-    result = agent.invoke({"messages": [
+    conversation_history.append(
         {"type": "user", "content": request.message}
-    ]})
+    )
+    
+    
+    result = agent.invoke({"messages": conversation_history})
+    conversation_history.append(
+        {"type": "assistant", "content": result["messages"][-1].content}
+    )
+    
+    print(conversation_history)
     return ChatResponse(reply=result["messages"][-1].content)
