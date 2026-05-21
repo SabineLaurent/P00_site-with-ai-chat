@@ -58,6 +58,14 @@ def chat(request: ChatRequest) -> ChatResponse:
         credential=config.api_key,
         model=config.model_name,
     )
+
+    tools = [list_recipes, create_recipe, delete_recipe]
+
+    agent = create_tool_calling_agent(
+        llm=model,
+        tools=tools,
+    )
+
     response = model.invoke([HumanMessage(content=request.message)])
 
 
