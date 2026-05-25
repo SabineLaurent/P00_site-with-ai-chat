@@ -1,120 +1,207 @@
 # Site with AI chat
 
-Mini-application "Carnet de recettes" :
-- **Backend** FastAPI (Python) avec une API REST pour gérer des recettes
-- **Frontend** Next.js 15 (TypeScript) qui consomme l'API
-- **Chat IA** : un endpoint `/chat` côté backend que **vous devez implémenter** (LangChain + Azure AI Inference, déploiement **Kimi-K2.6**)
+Application pédagogique web full stack qui combine une gestion de recettes et un assistant culinaire conversationnel. Ecrivez à l'agent: il comprend vos demandes, liste vos recettes, en crée, en supprime ou en suggère — sans action manuelle de votre part.
 
-Les consignes pédagogiques détaillées te sont remises séparément par ton formateur.
+![Capture d'écran de l'application](docs/)
+
+<br>
+
+## Contexte
+
+Réalisé dans le cadre d'une formation de développeur en intelligence artificielle et agentique, ce projet consistait à intégrer un chat IA dans une webapp pré-existante.
+
+<br>
+
+## Stack technique
+
+| Couche    | Technologie                                                        |
+| --------- | ------------------------------------------------------------------ |
+| Backend   | Python 3.12 · FastAPI 0.136 · Uvicorn 0.47                         |
+| Agent IA  | LangChain 1.3 · LangGraph 1.2 · Azure AI Inference (Kimi-K2.6)     |
+| Frontend  | Next.js 15.5 · React 19.2 · TypeScript 5.9 · Tailwind CSS 3.4      |
+| Infra     | Docker · Docker Compose                                            |
+
+<br>
+
+## Fonctionnalités implémentées
+
+- **branchement d'un modèle LLM à la chatbox**: modèle installé sur Azure AI Foundry
+- **CRUD recettes par l'agent IA**: via la création de tools (liste, détail, création, suppression) – exploitant l'API REST initialement en place.
+- **Chat IA** : l'agent *Gusto* répond en langage naturel et interagit directement avec le store de recettes.
+- **Mémoire de session** : le contexte de la conversation est conservé tout au long d'une session.
+
+<br>
 
 ## Prérequis
 
-- Docker et Docker Compose installés
-- Un accès au déploiement Azure AI Foundry (endpoint + clé + nom du modèle), fourni par votre formateur
+- **Python** 3.11 ou supérieur installé
+- **uv** pour gérer les packages et l'environnement python.
+- [Docker](https://docs.docker.com/get-docker/) et Docker Compose
+- Un accès Azure AI Foundry avec un déploiement **Kimi-K2.6** (endpoint, clé API, nom du modèle)
 
-## Lancement
+<br>
+
+## Démarrage rapide
 
 ```bash
-# 1. Configurer les variables Azure
+# 1. Cloner le dépôt
+git clone <url-du-repo> && cd P00_site-with-ai-chat
+
+# 2. Configurer les variables d'environnement
 cp .env.example .env
-# édite .env et renseigne les trois variables AZURE_*
-# (endpoint et clé visibles dans Azure AI Foundry → ton projet → Models + endpoints → Kimi-K2.6)
+# → Renseigner AZURE_AI_INFERENCE_API_KEY, AZURE_AI_INFERENCE_ENDPOINT, AZURE_AI_INFERENCE_MODEL
 
-# 2. Démarrer
+# 3. Installer les dépendances du backend avec création de l'environnement de développement.
+cd backend
+uv sync
+
+# 4. Installer les dépendances du frontend.
+cd ../frontend
+npm install
+
+# 5. Démarrer l'application
+cd ..
 make up
-# (équivalent à : docker compose up --build)
+
 ```
 
-Ouvre ensuite :
-- Backend (Swagger UI) : <http://localhost:8000/docs>
-- Frontend : <http://localhost:3000>
+**Note**:
+Le backend vérifie la présence des variables d'environnement au démarrage et refuse de lancer si l'une est manquante.
 
-## Vérification rapide
+<br>
+
+## Commandes
+
+| Commande       | Effet                                                   |
+| -------------- | ------------------------------------------------------- |
+| `make up`      | Build et démarre tous les services (logs en avant-plan) |
+| `make down`    | Arrête les services                                     |
+| `make logs`    | Affiche les logs en continu                             |
+| `make test`    | Lance la suite de tests pytest                          |
+| `make restart` | Redémarre tous les services                             |
+| `make clean`   | Arrête et supprime les volumes                          |
+
+<br>
+
+## API
+
+| Méthode    | Endpoint            | Description                                              |
+| ---------- | ------------------- | -------------------------------------------------------- |
+| `GET`      | `/health`           | Vérification de santé                                    |
+| `GET`      | `/recipes`          | Liste toutes les recettes                                |
+| `POST`     | `/recipes`          | Crée une recette `{ name, ingredients[] }`               |
+| `GET`      | `/recipes/{id}`     | Récupère une recette par identifiant                     |
+| `DELETE`   | `/recipes/{id}`     | Supprime une recette                                     |
+| `POST`     | `/chat?session_id=` | Envoie un message à l'agent `{ message }` → `{ reply }`  |
+
+**Note**:
+Le paramètre `session_id` est nécessaire pour le contexte de conversation. La valeur par défaut est `"default"`.
+
+<br>
+
+## Structure du projet
 
 ```bash
-curl http://localhost:8000/health
-# {"status":"ok"}
-
-curl http://localhost:8000/recipes
-# Renvoie la liste des recettes pré-remplies
-
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Bonjour"}'
-# {"reply":"TODO: implémenter le chat. ..."}
-```
-
-Le frontend affiche les recettes à gauche et un panneau de chat à droite. Le chat répond actuellement avec un placeholder — **votre travail est d'y brancher un vrai agent LangChain**.
-
-## Fonctionnement du chat
-
-Cette section décrit le fonctionnement du chat côté backend et le flux complet de données.
-
-### Rôle de l'agent
-
-- L'agent est un assistant culinaire (prompt système) qui répond aux utilisateurs et décide quand appeler des outils.
-- Il s'appuie sur un modèle Azure AI (Kimi-K2.6) via LangChain.
-- Une mémoire de conversation est branchée pour conserver le contexte par session (`thread_id`).
-
-### Rôle de chaque outil
-
-Les outils sont exposés à l'agent pour interagir avec les recettes en mémoire :
-
-- `list_recipes` : retourne la liste actuelle des recettes (nom + ingrédients).
-- `create_recipe` : crée une recette à partir d'un nom et d'une liste d'ingrédients.
-- `delete_recipe` : supprime une recette par identifiant.
-
-Ces outils délèguent au module `store.py` (CRUD en mémoire) et renvoient des objets simples que l'agent peut résumer.
-
-### Flux de données
-
-1. Le frontend envoie un message utilisateur via `POST /chat`.
-2. Le backend crée (ou réutilise) un agent LangChain et lui passe le message.
-3. L'agent décide s'il répond directement avec le modèle ou s'il appelle un ou plusieurs outils.
-4. Les outils lisent ou modifient le store de recettes, puis renvoient leurs résultats à l'agent.
-5. L'agent compose la réponse finale et le backend renvoie `{ reply }` au frontend.
-6. Le frontend affiche la réponse et rafraîchit la liste des recettes.
-
-## Structure
-
-```
-.
-├── docker-compose.yml       # Orchestration backend + frontend
-├── Makefile                 # Raccourcis make up/down/logs/test
 ├── backend/
-│   ├── Dockerfile
-│   ├── pyproject.toml
-│   ├── app/
-│   │   ├── main.py          # FastAPI app + CORS
-│   │   ├── store.py         # CRUD recettes en mémoire
-│   │   └── routes/
-│   │       ├── health.py
-│   │       ├── recipes.py   # ✅ déjà implémenté
-│   │       └── chat.py      # ⚠️  STUB — à implémenter
-│   └── tests/test_recipes.py
+│   └── app/
+│       ├── main.py          # FastAPI : CORS + routing
+│       ├── config.py        # Chargement des variables Azure
+│       ├── store.py         # Store en mémoire (CRUD recettes)
+│       ├── routes/          # Endpoints HTTP (health, recipes, chat)
+│       └── agent/
+│           ├── agent.py     # Factory LangChain (create_agent + MemorySaver)
+│           ├── model.py     # Factory Modèle AI Azure
+│           ├── system_prompt.py
+│           └── tools.py     # Outils LangChain branchés sur store.py
 └── frontend/
-    ├── Dockerfile
-    ├── package.json
-    ├── app/                 # Pages Next.js (App Router)
-    ├── components/          # RecipeList, ChatPanel
+    ├── app/page.tsx         # Page principale (layout 2 colonnes)
+    ├── components/
+    │   ├── RecipeList.tsx   # Affichage et gestion des recettes
+    │   └── ChatPanel.tsx    # Interface de chat
     └── lib/api.ts           # Client REST typé
 ```
 
-## Commandes utiles
+<br>
 
-| Commande      | Effet                                            |
-|---------------|--------------------------------------------------|
-| `make up`     | Build + démarre tout (logs en avant-plan)        |
-| `make down`   | Arrête les services                              |
-| `make logs`   | Logs en continu                                  |
-| `make test`   | Lance les tests pytest du backend                |
-| `make clean`  | Down + supprime les volumes                      |
-| `make restart`| Down + Up
+## Comment fonctionne le chat?
 
-## Ressources
+### Rôle de l'agent
 
-- [FastAPI — premiers pas](https://fastapi.tiangolo.com/tutorial/first-steps/)
-- [LangChain — `create_agent`](https://docs.langchain.com/oss/python/langchain/agents)
-- [`langchain-azure-ai` — chat models](https://python.langchain.com/docs/integrations/chat/azure_ai/)
-- [Azure AI Foundry — Inference API](https://learn.microsoft.com/azure/ai-foundry/model-inference/)
-- [Next.js App Router](https://nextjs.org/docs/app)
+L'agent est en quelque sorte "l'intelligence dynamique" du chat. Concrètement, l'agent est composé d'un **modèle de langage** (ici _Kimi-K2.6_, hébergé sur _Azure AI Foundry_) associé à un **ensemble d'outils** qu'il va pouvoir actionner en cas de besoin. L'agent est orchestré par _LangChain_ sous le nom de **Gusto, assistant culinaire**.
+
+À chaque message reçu, l'agent prend une décision autonome :
+
+- soit il répond directement en langage naturel (question générale, conversation),
+- soit il appelle un ou plusieurs **outils** pour lire ou modifier les recettes, puis compose sa réponse à partir des résultats.
+
+La conversation est **mémorisée tout au long d'une session** : l'agent se souvient des échanges précédents grâce à `MemorySaver` (LangGraph). Chaque session est isolée par un identifiant (`session_id`) transmis dans la requête.
+
+### Rôle de chaque outil
+
+Les outils sont les seuls points de contact entre l'agent et les données de l'application. L'agent ne peut pas accéder au store directement — il passe obligatoirement par les outils suivants.
+
+| Outil           | Ce qu'il fait                                                              |
+| --------------- | -------------------------------------------------------------------------- |
+| `list_recipes`  | Retourne la liste complète des recettes (nom + ingrédients)                |
+| `create_recipe` | Crée une nouvelle recette à partir d'un nom et d'une liste d'ingrédients   |
+| `delete_recipe` | Supprime une recette par son identifiant interne                           |
+
+Chaque outil est une fonction Python décorée `@tool` (LangChain) qui délègue au module `store.py`. L'agent reçoit leurs résultats sous forme de texte et les intègre dans sa réponse finale — sans jamais exposer les identifiants internes à l'utilisateur (instruction du prompt système).
+
+### Flux de données
+
+```mermaid
+sequenceDiagram
+    participant U as Utilisateur (Navigateur)
+    participant C as ChatPanel.tsx
+    participant A as api.ts (sendChat)
+    participant B as Backend (chat.py)
+    participant G as Agent (LangChain/LangGraph)
+    participant T as Tools (tools.py/store.py)
+    participant M as Modèle Azure AI
+
+    U->>C: Saisie et envoi du message
+    C->>A: Appel sendChat(message)
+    A->>B: POST /chat?session_id=... { message }
+    B->>G: agent.invoke(HumanMessage, thread_id)
+    G-->>M: Prompt, historique, message
+    alt Réponse directe
+        M-->>G: AIMessage
+    else Appel d'outil
+        G->>T: ToolCall (list/create/delete)
+        T-->>G: Résultat
+        G-->>M: Résultat outil
+        M-->>G: AIMessage
+    end
+    G-->>B: Réponse finale
+    B-->>A: { reply }
+    A-->>C: Résultat (réponse assistant)
+    C->>U: Affichage bulle assistant
+    C->>C: onMutation() → refresh recettes
+```
+
+<br>
+
+## Notes
+
+- Le store de recettes est **en mémoire** : les données sont réinitialisées à chaque redémarrage du backend. Deux recettes de démonstration sont pré-chargées au démarrage.
+
+<br>
+
+## Amélioration possibles
+
+- implémenter une **base de données pour la persistance** des ajouts et suppressions de recettes. Avec par exemple un serveur postgreSQL (base de données relationnelle) et SQLAlchemy (ORM python).
+- exploration et mise en place de la **sécurisation** autour de l'agent IA.
+- ajouter des **informations et features supplémentaires pour les recettes** (photos de recette et possibilité d'ajouter une photo etc.)
+- revoir le frontend pour un **design** et une **UX** un peu plus attrayante et agréable.
+- creuser la question de l'**optimisation du temps de réponse** du llm.
+- voir comment **augmenter la fiabilité** de l'IA dans ses réponses à l'utilisateur  cf anomalie rencontrée ci dessous.
+
+<br>
+
+## Anomalie rencontrée
+
+- Réponse inadaptée du llm
+
+![réponse inadaptée rencontrée](docs/bugs/anomalie_2026-05-22-à-00.47.51.png)
+  

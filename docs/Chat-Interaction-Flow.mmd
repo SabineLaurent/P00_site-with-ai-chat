@@ -1,0 +1,32 @@
+sequenceDiagram
+    participant U as Utilisateur (Navigateur)
+    participant C as ChatPanel.tsx
+    participant A as api.ts (sendChat)
+    participant B as Backend (chat.py)
+    participant G as Agent (LangChain/LangGraph)
+    participant T as Tools (tools.py/store.py)
+    participant M as Modèle Azure AI
+
+    U->>C: Saisie et envoi du message
+    C->>A: Appel sendChat(message)
+    A->>B: POST /chat?session_id=... { message }
+    B->>G: agent.invoke(HumanMessage, thread_id)
+    G-->>M: Prompt, historique, message
+    alt Réponse directe
+        M-->>G: AIMessage
+    else Appel d'outil
+        G->>T: ToolCall (list/create/delete)
+        T-->>G: Résultat
+        G-->>M: Résultat outil
+        M-->>G: AIMessage
+    end
+    G-->>B: Réponse finale
+    B-->>A: { reply }
+    A-->>C: Résultat (réponse assistant)
+    C->>U: Affichage bulle assistant
+    C->>C: onMutation() → refresh recettes
+
+%% ------------------------------------------------------------- 
+%% Lien pour visualiser le diagramme et modifier le code Mermaid
+%% ------------------------------------------------------------- 
+%% https://mermaid.live/edit#pako:eNp1k99u2jAUxl_F8s1SKYSyQgFL6xSYxCotXbXCzYQ0eckhserYme1UbRG3e4A9xfYcfZM9yY4JKWxlviAm_n3n8_mTNU11BpRRC99qUCm8Ezw3vFwqgqvixolUVFw5siDckoUTUljuoDYkuOJ3It_uT17iU49PC-6uuQIZOXv_kok9wyuBpySwoDLPH4k18dyEp7eIkCBFKKoejnAzz8U54Db4wFWO4YTq-t3M8Ko4oph7xVxriRdw_oGBu9ZpA8cdEs8nOnv6KYHEj7XB38ulasBF5-JiysgNF1YAAUdA3WlBspqUYC3PocGmiMWMxFUFkrRZBztk5xkjM2Hk-uPNnHR9wm8tngutvojsTRRFZN3GJJtGMUHFjBHus48EGt9C8L4uuUoaLiSuMMAzDLDzmHVQkqCJ0WXlQlIIn7jAMQj_vjCXjnx6-lVpZYFkwkDqdid-JZ3GOb5MDkUgEW5yzF7pGudmL5mhYs62dZ9yKUmAM-W6KV7PQTcDCa6tg1_znQFewdbScXcYqEnh-Yj84_S_y6nsoAYTtk9vJRSX0Ja06dSaGKjkQ1vpuNP0eW8amFbOsUnW4aSc7Hu9QPvVSmAXsVtfaykPsD2FAbVKagyHXQ5OyO_vP9B2ZcAW-EzBObA0pLkRGWXOYJNoCabk_i9d-zhL6gooYUkZbjNubpd0qTaowcn9rHXZyoyu84KyFccOhbSuMqz67qt_fmuwQmCmulaOstf9wTYIZWt6T9l4GPV64-H5eDzon50OB72QPlA26kf9Mb4ajc7PxsPeqLcJ6ePW9TQaDQebPwswa8w
