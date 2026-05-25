@@ -1,8 +1,10 @@
 # Site with AI chat
 
-Application pédagogique web full stack qui combine une gestion de recettes et un assistant culinaire conversationnel. Ecrivez à l'agent: il comprend vos demandes, liste vos recettes, en crée, en supprime ou en suggère — sans action manuelle de votre part.
+Application web full stack qui combine une gestion de recettes et un assistant culinaire conversationnel.
 
-![Capture d'écran de l'application](docs/)
+Ecrivez à l'agent: il comprend vos demandes, liste vos recettes, en crée, en supprime ou en suggère — sans action manuelle de votre part.
+
+![Capture d'écran de l'application](docs/Gusto-en-action.png)
 
 <br>
 
@@ -64,6 +66,14 @@ cd ..
 make up
 
 ```
+
+- Le frontend est accessible à l'adresse: <http://localhost:3000/>
+- Le backend: <http://localhost:8000/>
+- La doc swagger: <http://localhost:8000/docs>
+
+
+<br>
+
 
 **Note**:
 Le backend vérifie la présence des variables d'environnement au démarrage et refuse de lancer si l'une est manquante.
@@ -188,7 +198,7 @@ sequenceDiagram
 
 <br>
 
-## Amélioration possibles
+## Amélioration possibles (sans ordre de priorité)
 
 - implémenter une **base de données pour la persistance** des ajouts et suppressions de recettes. Avec par exemple un serveur postgreSQL (base de données relationnelle) et SQLAlchemy (ORM python).
 - exploration et mise en place de la **sécurisation** autour de l'agent IA.
@@ -196,6 +206,7 @@ sequenceDiagram
 - revoir le frontend pour un **design** et une **UX** un peu plus attrayante et agréable.
 - creuser la question de l'**optimisation du temps de réponse** du llm.
 - voir comment **augmenter la fiabilité** de l'IA dans ses réponses à l'utilisateur  cf anomalie rencontrée ci dessous.
+- mise en place d'un sytème de sign up, log in, et log out.
 
 <br>
 
